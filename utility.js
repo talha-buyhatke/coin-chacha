@@ -219,7 +219,7 @@ async function sendDataTurboExternal(full_data, ex_name) {
                     body: urlencoded,
                     redirect: 'follow'
                 };
-                fetch("http://localhost:3000/uploadTickerData", requestOptions)
+                fetch("https://test.buyhatke.com/ngn/uploadTickerData", requestOptions)
                     .then(response => {
                         return resolve('ok');
                     })

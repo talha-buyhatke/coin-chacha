@@ -87,7 +87,6 @@ const handleQuery = (query, params, connection) => {
     })
 }
 
-
 module.exports = {
     commonQuery,
     getConnection,
