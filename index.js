@@ -5,32 +5,8 @@ const port = 3600;
 const crypto = require("crypto");
 const path = require("path");
 const https = require("https");
+const dbHandle = require('./db.js');
 
-const mysql = require('mysql');
-
-const pool = mysql.createPool({
-    host: 'localhost',
-    user: 'root',
-    password: 'Buyhatke@123',
-    database: 'coin_chacha',
-    connectionLimit: 10,
-});
-
-const connection = pool.promise();
-
-// Check if the connection is established
-async function checkConnection() {
-    try {
-        await connection.query('SELECT 1');
-        console.log('Connection is established.');
-    } catch (error) {
-        console.error('Connection failed:', error);
-    } finally {
-        connection.end(); // Close the connection
-    }
-}
-
-checkConnection();
 
 
 
@@ -78,7 +54,7 @@ app.get("/", (req, res) => {
 });
 
 
-app.post("/uploadTickerData", async (req, res) => {
+app.post("/ngn/uploadTickerData", async (req, res) => {
     try {
         const data = req.body.data;
         const exchangeName = req.body.ex_name;
@@ -111,6 +87,53 @@ app.post("/uploadTickerData", async (req, res) => {
         return res.send({ status: 0, msg: "Something went wrong!" });
     }
 });
+async function getObj(coinName) {
+    try {
+        let tQ_sel = 'SELECT * FROM `onramp`.`exchange_table` WHERE coin_id=?';
+        let res_sel = await dbHandle.commonQuery(tQ_sel, [coinName]);
+        let finalObject = {};
+        // console.log(res_sel[0].ex_name, res_sel[0].price);
+        finalObject['coin_id'] = coinName;
+        let min = null;
+        for (let i = 0; i < res_sel.length; i++) {
+            finalObject[res_sel[i].ex_name] = res_sel[i].price;
+            if (min == null)
+                min = parseFloat(res_sel[i].price);
+            else if (min > parseFloat(res_sel[i].price))
+                min = parseFloat(res_sel[i].price);
+        }
+        finalObject['price'] = String(min);
+        return finalObject;
+    }
+    catch (e) {
+
+    }
+}
+async function getAllObjects() {
+    try {
+        let coinsList = ['btc', 'eth', 'matic', 'xrp', 'shib', 'doge', 'usdt', 'bnb', 'sol', 'dot']
+        let finalArray = [];
+        for (let i = 0; i < coinsList.length; i++) {
+            let objGet = await getObj(coinsList[i]);
+            finalArray.push(objGet);
+        }
+        return finalArray;
+    }
+    catch (e) {
+        console.log(e);
+    }
+}
+app.get("/ngn/getCoins", async (req, res) => {
+    try {
+        let coins = await getAllObjects();
+        return res.json({ status: 1, coins });
+    } catch (error) {
+        console.log("Error in getCoins", error);
+        return res.json({ status: 0, msg: "Something went wrong!" });
+    }
+});
+
+
 
 
 

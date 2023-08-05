@@ -62,14 +62,14 @@ async function matchReadAndDelete(file) {
 }
 async function insertDBRecon(price, ex_name, coin_id) {
     try {
-        let tQ_sel = 'SELECT id FROM `coin_chacha`.`exchange_table` WHERE coin_id=? AND ex_name=?';
+        let tQ_sel = 'SELECT id FROM `onramp`.`exchange_table` WHERE coin_id=? AND ex_name=?';
         let res_sel = await dbHandle.commonQuery(tQ_sel, [coin_id, ex_name]);
         if (res_sel.length > 0) {
-            var tQ_ju = `UPDATE coin_chacha.exchange_table SET price=? WHERE coin_id=? AND ex_name=?`;
+            var tQ_ju = `UPDATE onramp.exchange_table SET price=? WHERE coin_id=? AND ex_name=?`;
             var val_ju = [price, coin_id, ex_name];
             await dbHandle.commonQuery(tQ_ju, val_ju);
         } else {
-            var tQ_in = "INSERT INTO coin_chacha.exchange_table (coin_id,ex_name,price) VALUES (?,?,?)"
+            var tQ_in = "INSERT INTO onramp.exchange_table (coin_id,ex_name,price) VALUES (?,?,?)"
             var val_in = [coin_id, ex_name, price];
             let res_in = await dbHandle.commonQuery(tQ_in, val_in);
         }
