@@ -5,7 +5,7 @@ async function main()
     const browser = await puppeteer.launch();
     const page = await browser.newPage();
     await page.goto('https://p2p.binance.com/en/trade/all-payments/USDT?fiat=INR');
-    await page.waitForTimeout(1000)
+    await page.waitForTimeout(1500)
     let list = await page.$$(".css-r9lvvx .css-efxh6x .css-onyc9z");
     let arr = 0;
     for(let i = 0; i < 3; i++)
@@ -22,7 +22,7 @@ async function main()
     //     return document.querySelectorAll('.css-onyc9z')
     // })
     console.log(list?.length);
-    // await browser.close()
+    await browser.close()
 }
 
 setInterval(main, 5000)

@@ -1,4 +1,4 @@
-exports.bitbns = async () =>
+bitbns = async () =>
 {
    let response = await fetch('https://bitbns.com/order/getTickerWithVolume/');
    response = await response.json();
@@ -18,4 +18,4 @@ exports.bitbns = async () =>
    // console.log(result.length);
    // console.log(result[0]);
 }
-
+bitbns()
