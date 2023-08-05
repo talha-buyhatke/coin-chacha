@@ -28,6 +28,7 @@ async function start() {
         console.log(e);
     }
 }
+let flag = true;
 async function matchReadAndDelete(file) {
     var ex_name = file.split("__")[0].trim();
     const fileContents = fs.readFileSync("./tickerDump/" + file, 'utf-8');
@@ -40,14 +41,18 @@ async function matchReadAndDelete(file) {
         return;
     }
     await utility.asyncForEach(data, async function (index, eachData) {
+        if (flag) {
+            console.log(eachData);
+            flag = false;
+        }
         let price = eachData['price'];
         let ex_name = eachData['ex_name'];
         let coin_id = eachData['coin_id']
         try {
-            if (price != null && ex_name != null && coin_id != null) {
+            if (price != null && ex_name != null && coin_id != null && price != 'undefined') {
                 await insertDBRecon(price, ex_name, coin_id);
             } else {
-                console.log("issue with file ", file);
+                console.log("issue with file ", file, eachData);
             }
         } catch (ee) {
             console.log("Error ", ee);

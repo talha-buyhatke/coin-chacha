@@ -3,5 +3,5 @@ module.exports = {
     port: 3306,
     user: 'root',
     password: 'Buyhatke@123',
-    poolSize: 50,
+    // poolSize: 50,
 };
