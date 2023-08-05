@@ -1,16 +1,15 @@
 const utility = require('../utility');
 
 async function main() {
-    let response = await fetch('https://api.coindcx.com/exchange/ticker');
+    let response = await fetch("https://cs-india.coinswitch.co/api/v2/external/csk_website/currencies");
     response = await response.json();
-    // console.log(response);
+    response = response.data.currencies;
     let res = []
     for (let i = 0; i < response.length; i++) {
-        let o = response[i];
         let details = {};
-        details['ex_name'] = 'COINDCX';
-        details['coin_id'] = o.market.split('INR').length == 1 ? false : o.market.split('INR')[0].toLowerCase();
-        details['price'] = String(o.high);
+        details['ex_name'] = 'COINSWITCH';
+        details['coin_id'] = response[i].currency;
+        details['price'] = response[i].price.replace(/,/g, '');;
         // console.log(details["price"] == false || details["price"] == null || details["price"] == '0');
         if (details["price"] == false || details["price"] == null || details["price"] == '0' ||
             details["coin_id"] == false || details["coin_id"] == null || details["coin_id"] == '0' || details["price"] == undefined
@@ -20,7 +19,7 @@ async function main() {
     }
     console.log(res.length)
     console.log(res[0]);
-    utility.sendAllData(JSON.stringify(res), 'coindcx');
+    utility.sendAllData(JSON.stringify(res), 'coinswitch');
 }
 
 main()

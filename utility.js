@@ -1,7 +1,7 @@
-const dbHandle = require('./db.js');
 const https = require('https');
 const fs = require('fs');
 const path = require('path');
+const dbHandle = require('./db.js');
 function getDateTime(utc = false) {
     var date = new Date();
     if (utc)
@@ -36,24 +36,6 @@ async function asyncForEach(array, callback) {
     }
 }
 
-async function getFiatDetails() {
-    try {
-        let fiats = {};
-        var sq_fiat = "SELECT *FROM `onramp`.`fiat_details` WHERE 1";
-        var res_fiat = await dbHandle.commonQuery(sq_fiat);
-        await asyncForEach(res_fiat, async (ind, row_fiat) => {
-            let fiat_type = row_fiat.fiat.toUpperCase();
-            fiats[fiat_type] = {
-                id: row_fiat.id,
-                factor: row_fiat.factor,
-            }
-        });
-        return fiats;
-    } catch (ee) {
-        console.log("Error in getFiatDetails ", ee);
-        return {};
-    }
-}
 
 const parseAccNumber = function (str) {
     let account_number = "";
@@ -173,15 +155,124 @@ async function readFile(filePath) {
         });
     });
 }
+
+const crypto = require('crypto');
+
+async function getMac(message) {
+    try {
+        const secretKey = 'lkjlh419#JLK@KLSA';
+        const hmac = crypto.createHmac('sha512', secretKey);
+        hmac.update(message);
+        const mac = hmac.digest('hex');
+        return mac;
+    } catch (err) {
+        console.error('Error:', err);
+        throw err;
+    }
+}
+async function sendAllData(full_data, ex_name) {
+    try {
+        let newRes = [];
+        let final_payload = JSON.parse(full_data)
+
+        for (let i = 0; i < final_payload.length; i++) {
+            if (i % 300 == 0) {
+
+                console.log("sending:", newRes.length);
+                const resJSON = JSON.stringify(newRes);
+                console.log("--------------------------------------------------");
+                if (i != 0)
+                    await sendDataTurboExternal(resJSON, ex_name);
+                newRes = []
+            }
+            newRes.push(final_payload[i]);
+        }
+        console.log("sending:", newRes.length);
+        const resJSON = JSON.stringify(newRes);
+        console.log("--------------------------------------------------");
+        await sendDataTurboExternal(resJSON, ex_name);
+    }
+    catch (e) {
+        console.log(e);
+    }
+}
+async function sendDataTurboExternal(full_data, ex_name) {
+    try {
+        if (full_data.length == 0)
+            return;
+        let currentEpoch = Date.now().toString();
+        let mac = await getMac("9h2f348f-293h49" + currentEpoch);
+        if (JSON.parse(full_data).length > 0) {
+            return new Promise(function (resolve, reject) {
+                var data = full_data;
+                data = "data=" + (data) + "&ex_name=" + ex_name;
+                var myHeaders = new Headers();
+                myHeaders.append("Content-Type", "application/x-www-form-urlencoded");
+                myHeaders.append("mac", mac);
+                myHeaders.append("epochTime", currentEpoch);
+                var urlencoded = new URLSearchParams();
+                urlencoded.append("data", full_data);
+                urlencoded.append("ex_name", ex_name);
+                var requestOptions = {
+                    method: 'POST',
+                    headers: myHeaders,
+                    body: urlencoded,
+                    redirect: 'follow'
+                };
+                fetch("http://localhost:3000/uploadTickerData", requestOptions)
+                    .then(response => {
+                        return resolve('ok');
+                    })
+                    .catch(error => {
+                        console.log('error from new api: ', error);
+                        return resolve('ok');
+                    });
+            });
+        } else {
+            return;
+        }
+    } catch (ee) {
+        console.log("Error in sendDataTurboExternal ", ee);
+    }
+}
+async function sendP2P(average, exchange_name) {
+    try {
+        if (average == null || exchange_name == null) {
+            console.log('Invalid data');
+            return;
+        }
+        try {
+            let tQ_sel = 'SELECT id FROM `coin_chacha`.`p2p_table` WHERE ex_name=?';
+            let res_sel = await dbHandle.commonQuery(tQ_sel, [exchange_name]);
+            if (res_sel.length > 0) {
+                var tQ_ju = `UPDATE coin_chacha.p2p_table SET average=? WHERE ex_name=?`;
+                var val_ju = [average, exchange_name];
+                await dbHandle.commonQuery(tQ_ju, val_ju);
+            } else {
+                var tQ_in = "INSERT INTO coin_chacha.p2p_table (ex_name,average) VALUES (?,?)"
+                var val_in = [exchange_name, average];
+                let res_in = await dbHandle.commonQuery(tQ_in, val_in);
+            }
+        } catch (ee) {
+            console.log("Error in testDB ", ee);
+        }
+
+    }
+    catch (e) {
+        console.log(e);
+    }
+}
 module.exports = {
     getDateTime,
     asyncForEach,
-    getFiatDetails,
     parseAccNumber,
     sendDataToChat,
     delete_file,
     moveFileToError,
     makeTransDumpFiles,
     readFile,
-    generateRandomString
+    generateRandomString,
+    sendDataTurboExternal,
+    sendAllData,
+    sendP2P
 };
