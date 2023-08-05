@@ -1,6 +1,5 @@
-const utility = require('../utility');
-
-bitbns = async () => {
+exports.bitbns = async () =>
+{
    let response = await fetch('https://bitbns.com/order/getTickerWithVolume/');
    response = await response.json();
    coinName = Object.keys(response);
