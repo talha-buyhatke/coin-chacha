@@ -1,25 +1,21 @@
-const puppeteer = require('puppeteer');
-
-async function main() {
-    const browser = await puppeteer.launch({ headless: "new" });
-    const page = await browser.newPage();
-    await page.goto('https://www.okx.com/p2p-markets');
-    await page.waitForTimeout(1000)
-    let list = await page.$$(".price");
-    let arr = 0;
-    for (let i = 0; i < 3; i++) {
-        let textContent = await list[i]?.evaluate(node => node.textContent);
-        textContent = textContent.split(' ')[0];
-        console.log(textContent);
-        textContent = parseFloat(textContent);
-        arr += textContent;
+async function main()
+{
+    let result = await fetch('https://www.okx.com/v3/c2c/tradingOrders/getMarketplaceAdsPrelogin?cryptoCurrency=usdt&fiatCurrency=inr')
+    result = await result.json();
+    console.log(result['data']['buy'].length);
+    let jsonResult = []
+    for(let i = 0; i < result['data']['buy'].length; i++)
+    {
+        if(result['data']['buy'][i]['nickName'] == null || result['data']['buy'][i]['availableAmount'] == null || result['data']['buy'][i]['price'] == null)
+        continue
+        let info = {};
+        info['name'] = result['data']['buy'][i]['nickName'];
+        info['quantity'] =  result['data']['buy'][i]['availableAmount'];
+        info['price'] = result['data']['buy'][i]['price'];
+        info['url'] = 'www.okx.com/p2p-markets';
+        info['ex_name'] = 'OKX'
+        jsonResult.push(info);
     }
-    let res = {}
-    res['avg'] = arr / 3
-    res['exchange_id'] = 'binance';
-    console.log(res);
-    console.log(list?.length);
-    await browser.close()
+    console.log(jsonResult);
 }
-
-setInterval(main, 5000)
+main()
