@@ -219,7 +219,7 @@ async function sendDataTurboExternal(full_data, ex_name) {
                     body: urlencoded,
                     redirect: 'follow'
                 };
-                fetch("http://localhost:3000/uploadTickerData", requestOptions)
+                fetch("http://localhost:3600/uploadTickerData", requestOptions)
                     .then(response => {
                         return resolve('ok');
                     })
